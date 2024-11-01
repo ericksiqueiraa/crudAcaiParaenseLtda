@@ -5,20 +5,21 @@ from tkinter import ttk, messagebox
 import pandas as pd
 from datetime import datetime
 
-# Definindo a lista de produtos e unidades padrão
+# Dicionário com os produtos e suas unidades de medida
 PRODUTOS = {
     "Polpa Açaí Parlamaz": "kg",
+    "Polpa Açaí Xingu": "kg",
     "Açaí Preparado": "litro",
-    "Farinha": "kg",
+    "Farinha": ["kg", "litro"],
+    "Combo": "unidade",
     "Taperebá": "kg",
     "Cupuaçu": "kg",
-    "Tapioca": "g",
+    "Tapioca": "kg",
     "Pimenta": "ml",
-    "Camarão": "g",
-    "Peixe": "kg",
+    "Camarão": ["g", "kg"],
+    "Peixe": ["kg", "g"],
     "Conserva": "unidade",
-    "Charque": "kg",
-    "Polpa Açaí Xingu": "kg",
+    "Charque": ["kg", "g"],
     "Maniva": "kg",
     "Tucupi": "litro"
 }
@@ -40,7 +41,7 @@ class SistemaControleVendas:
         pagamento = self.pagamento_selecionado.get()
         
         try:
-            qtd = float(self.entry_qtd.get())
+            qtd = float(self.entry_qtd.get().replace(",", "."))
             preco_unitario = float(self.entry_preco.get().replace("R$ ", "").replace(",", "."))
         except ValueError:
             messagebox.showerror("Erro", "Digite valores válidos para quantidade e preço.")
@@ -86,9 +87,11 @@ class SistemaControleVendas:
         messagebox.showinfo("Sucesso", "Vendas salvas com sucesso!")
 
     def atualizar_unidades(self, event):
+        # Atualiza o Combobox de unidades de medida de acordo com o produto selecionado
         produto = self.produto_selecionado.get()
-        unidade = PRODUTOS.get(produto, "")
-        self.entry_unidade.set(unidade)
+        unidades = PRODUTOS.get(produto, [])
+        self.entry_unidade['values'] = unidades
+        self.entry_unidade.set('')  # Limpa o valor selecionado anteriormente
 
     def limpar_campos(self):
         self.produto_selecionado.set('')
@@ -97,6 +100,13 @@ class SistemaControleVendas:
         self.entry_unidade.set('')
         self.entry_cliente.delete(0, tk.END)
         self.pagamento_selecionado.set('')
+
+    def cancelar_venda(self):
+        self.vendas.clear()
+        self.atualizar_lista_vendas()
+        self.lbl_total_venda.config(text="Total da Venda: R$ 0,00")
+        self.limpar_campos()
+        messagebox.showinfo("Cancelamento", "Venda cancelada com sucesso!")
 
     def criar_interface(self):
         style = Style()
@@ -124,6 +134,7 @@ class SistemaControleVendas:
         ttk.Label(frame_produto, text="Unidade:", font=("Helvetica", 12)).grid(row=3, column=0, sticky="w", padx=5)
         self.entry_unidade = ttk.Combobox(frame_produto, font=("Helvetica", 12), state="readonly")
         self.entry_unidade.grid(row=3, column=1, padx=10, pady=5)
+
 
         # Frame para cliente e pagamento
         frame_cliente = ttk.Labelframe(self.root, text="👤 Dados do Cliente", padding=20, bootstyle="info")
@@ -159,6 +170,9 @@ class SistemaControleVendas:
         
         btn_limpar = ttk.Button(frame_botoes, text="Limpar Campos", command=self.limpar_campos, bootstyle="danger-outline")
         btn_limpar.pack(pady=5)
+
+        btn_cancelar = ttk.Button(frame_botoes, text="Cancelar Venda", command=self.cancelar_venda, bootstyle="warning")
+        btn_cancelar.pack(pady=5)
 
         # Label de total de vendas
         self.lbl_total_venda = ttk.Label(self.root, text="Total da Venda: R$ 0,00", font=("Helvetica", 14))
